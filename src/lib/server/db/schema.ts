@@ -7,7 +7,8 @@ import {
 	varchar,
 	boolean,
 	integer,
-	pgEnum
+	pgEnum,
+	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -15,6 +16,16 @@ import { relations } from 'drizzle-orm';
 export const contentTypeEnum = pgEnum('content_type', ['post']);
 export const mediaTypeEnum = pgEnum('media_type', ['image', 'video', 'audio']);
 export const postStatusEnum = pgEnum('post_status', ['draft', 'published', 'archived']);
+export const subscriberStatusEnum = pgEnum('subscriber_status', [
+	'pending',
+	'verified',
+	'unsubscribed'
+]);
+export const newsletterSendStatusEnum = pgEnum('newsletter_send_status', [
+	'sending',
+	'sent',
+	'failed'
+]);
 
 // Posts table - the main content type for timeline posts
 export const posts = pgTable('posts', {
@@ -76,6 +87,46 @@ export const apiKeys = pgTable('api_keys', {
 	createdBy: uuid('created_by').notNull() // References auth.users
 });
 
+// Subscribers table for email newsletter signups
+export const subscribers = pgTable(
+	'subscribers',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		email: varchar('email', { length: 255 }).notNull(),
+		status: subscriberStatusEnum('status').default('pending').notNull(),
+		verificationToken: varchar('verification_token', { length: 255 }),
+		tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
+		verifiedAt: timestamp('verified_at', { withTimezone: true }),
+		unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+		ipAddress: varchar('ip_address', { length: 45 }),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(table) => [uniqueIndex('subscribers_email_idx').on(table.email)]
+);
+
+// Newsletter configuration (single-row table)
+export const newsletterConfig = pgTable('newsletter_config', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	sendDay: integer('send_day').default(28).notNull(),
+	sendHour: integer('send_hour').default(12).notNull(),
+	isActive: boolean('is_active').default(false).notNull(),
+	testEmail: varchar('test_email', { length: 255 }),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+});
+
+// Newsletter send history
+export const newsletterSends = pgTable('newsletter_sends', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	monthYear: varchar('month_year', { length: 7 }).notNull(),
+	subject: text('subject').notNull(),
+	htmlContent: text('html_content').notNull(),
+	recipientCount: integer('recipient_count').default(0).notNull(),
+	status: newsletterSendStatusEnum('status').default('sending').notNull(),
+	sentAt: timestamp('sent_at', { withTimezone: true }),
+	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+});
+
 // Relations
 export const postsRelations = relations(posts, ({ many }) => ({
 	postMedia: many(postMedia)
@@ -105,3 +156,7 @@ export type PostMedia = typeof postMedia.$inferSelect;
 export type NewPostMedia = typeof postMedia.$inferInsert;
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type NewApiKey = typeof apiKeys.$inferInsert;
+export type Subscriber = typeof subscribers.$inferSelect;
+export type NewSubscriber = typeof subscribers.$inferInsert;
+export type NewsletterConfig = typeof newsletterConfig.$inferSelect;
+export type NewsletterSend = typeof newsletterSends.$inferSelect;

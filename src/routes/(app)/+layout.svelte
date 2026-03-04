@@ -28,6 +28,7 @@
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import User from '@lucide/svelte/icons/user';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import Mail from '@lucide/svelte/icons/mail';
 	import Menu from '@lucide/svelte/icons/menu';
 	import X from '@lucide/svelte/icons/x';
 
@@ -50,6 +51,7 @@
 			icon: contentTypes.find((t) => t.value === selectedContentType)?.icon || FileText
 		},
 		{ name: 'Media Library', href: '/media', icon: Image },
+		{ name: 'Newsletter', href: '/newsletter', icon: Mail },
 		{ name: 'API Keys', href: '/settings/api-keys', icon: Key },
 		{ name: 'Settings', href: '/settings', icon: Settings }
 	]);
