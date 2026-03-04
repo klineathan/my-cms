@@ -50,6 +50,7 @@
 		"@tiptap/pm": "^3.14.0",
 		"@tiptap/starter-kit": "^3.14.0",
 		"date-fns": "^4.1.0",
+		"mailersend": "^2.6.0",
 		"postgres": "^3.4.7",
 		"svelte-tiptap": "^3.0.1"
 	}
