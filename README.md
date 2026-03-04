@@ -1,4 +1,4 @@
-# Timeline CMS
+# My CMS
 
 A custom content management system for managing Facebook-style timeline posts. Built with SvelteKit, Tailwind CSS, shadcn-svelte, Drizzle ORM, and Supabase.
 

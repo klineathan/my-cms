@@ -102,7 +102,7 @@
 </script>
 
 <svelte:head>
-	<title>Newsletter | Timeline CMS</title>
+	<title>Newsletter | My CMS</title>
 </svelte:head>
 
 <div class="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">

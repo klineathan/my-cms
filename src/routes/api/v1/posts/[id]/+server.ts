@@ -1,54 +1,9 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { posts, postMedia, media, apiKeys } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
-
-async function validateApiKey(request: Request): Promise<boolean> {
-	const authHeader = request.headers.get('Authorization');
-	if (!authHeader?.startsWith('Bearer ')) {
-		return false;
-	}
-
-	const apiKey = authHeader.slice(7);
-	if (!apiKey) {
-		return false;
-	}
-
-	// Get key prefix (first 8 chars)
-	const keyPrefix = apiKey.slice(0, 8);
-
-	// Find API key by prefix
-	const [keyRecord] = await db
-		.select()
-		.from(apiKeys)
-		.where(and(eq(apiKeys.keyPrefix, keyPrefix), eq(apiKeys.isActive, true)));
-
-	if (!keyRecord) {
-		return false;
-	}
-
-	// Check expiration
-	if (keyRecord.expiresAt && new Date(keyRecord.expiresAt) < new Date()) {
-		return false;
-	}
-
-	// Verify hash
-	const encoder = new TextEncoder();
-	const data = encoder.encode(apiKey);
-	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-	const hashArray = Array.from(new Uint8Array(hashBuffer));
-	const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-	if (hashHex !== keyRecord.keyHash) {
-		return false;
-	}
-
-	// Update last used
-	await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, keyRecord.id));
-
-	return true;
-}
+import { posts, postMedia, media, comments } from '$lib/server/db/schema';
+import { eq, and, asc } from 'drizzle-orm';
+import { validateApiKey } from '$lib/server/api-auth';
 
 export const GET: RequestHandler = async ({ request, params }) => {
 	// Validate API key
@@ -75,26 +30,41 @@ export const GET: RequestHandler = async ({ request, params }) => {
 		throw error(404, 'Post not found');
 	}
 
-	// Get associated media
-	const mediaItems = await db
-		.select({
-			id: media.id,
-			url: media.url,
-			mediaType: media.mediaType,
-			altText: media.altText,
-			caption: media.caption,
-			width: media.width,
-			height: media.height
-		})
-		.from(postMedia)
-		.innerJoin(media, eq(postMedia.mediaId, media.id))
-		.where(eq(postMedia.postId, params.id))
-		.orderBy(postMedia.order);
+	const [mediaItems, postComments] = await Promise.all([
+		db
+			.select({
+				id: media.id,
+				url: media.url,
+				mediaType: media.mediaType,
+				altText: media.altText,
+				caption: media.caption,
+				width: media.width,
+				height: media.height
+			})
+			.from(postMedia)
+			.innerJoin(media, eq(postMedia.mediaId, media.id))
+			.where(eq(postMedia.postId, params.id))
+			.orderBy(postMedia.order),
+		db
+			.select({
+				id: comments.id,
+				postId: comments.postId,
+				parentId: comments.parentId,
+				authorName: comments.authorName,
+				content: comments.content,
+				isOwner: comments.isOwner,
+				createdAt: comments.createdAt
+			})
+			.from(comments)
+			.where(eq(comments.postId, params.id))
+			.orderBy(asc(comments.createdAt))
+	]);
 
 	return json({
 		data: {
 			...post,
-			media: mediaItems
+			media: mediaItems,
+			comments: postComments
 		}
 	});
 };

@@ -40,7 +40,7 @@
 </script>
 
 <svelte:head>
-	<title>Login | Timeline CMS</title>
+	<title>Login | My CMS</title>
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 p-4">
@@ -52,7 +52,7 @@
 				<span class="text-2xl font-bold text-white">T</span>
 			</div>
 			<div>
-				<CardTitle class="text-2xl font-semibold tracking-tight text-stone-100">Timeline CMS</CardTitle>
+				<CardTitle class="text-2xl font-semibold tracking-tight text-stone-100">My CMS</CardTitle>
 				<CardDescription class="text-stone-400">Sign in to manage your content</CardDescription>
 			</div>
 		</CardHeader>

@@ -31,6 +31,7 @@
 	import Mail from '@lucide/svelte/icons/mail';
 	import Menu from '@lucide/svelte/icons/menu';
 	import X from '@lucide/svelte/icons/x';
+	import CircleUser from '@lucide/svelte/icons/circle-user';
 
 	let { children, data } = $props();
 
@@ -38,10 +39,15 @@
 	let selectedContentType = $state('posts');
 
 	const contentTypes = [
-		{ value: 'posts', label: 'Posts', icon: FileText }
-		// Future content types can be added here
-		// { value: 'articles', label: 'Articles', icon: BookOpen }
+		{ value: 'posts', label: 'Posts', icon: FileText },
+		{ value: 'homepage-profiles', label: 'Homepage Profiles', icon: CircleUser }
 	];
+
+	$effect(() => {
+		const path = $page.url.pathname;
+		if (path.startsWith('/homepage-profiles')) selectedContentType = 'homepage-profiles';
+		else if (path.startsWith('/posts') || path === '/') selectedContentType = 'posts';
+	});
 
 	const navigation = $derived([
 		{ name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -90,7 +96,7 @@
 				>
 					<span class="text-sm font-bold text-white">T</span>
 				</div>
-				<span class="text-lg font-semibold text-stone-100">Timeline CMS</span>
+				<span class="text-lg font-semibold text-stone-100">My CMS</span>
 			</div>
 
 			<!-- Content Type Selector -->
@@ -181,7 +187,7 @@
 				>
 					<span class="text-sm font-bold text-white">T</span>
 				</div>
-				<span class="text-lg font-semibold text-stone-100">Timeline CMS</span>
+				<span class="text-lg font-semibold text-stone-100">My CMS</span>
 			</div>
 			<Button
 				variant="ghost"

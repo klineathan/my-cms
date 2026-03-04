@@ -8,7 +8,8 @@ import {
 	boolean,
 	integer,
 	pgEnum,
-	uniqueIndex
+	uniqueIndex,
+	type AnyPgColumn
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -74,6 +75,34 @@ export const postMedia = pgTable('post_media', {
 	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 });
 
+// Comments table for post comments and admin replies
+export const comments = pgTable('comments', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	postId: uuid('post_id')
+		.references(() => posts.id, { onDelete: 'cascade' })
+		.notNull(),
+	parentId: uuid('parent_id').references((): AnyPgColumn => comments.id, {
+		onDelete: 'cascade'
+	}),
+	authorName: varchar('author_name', { length: 255 }).notNull(),
+	authorEmail: varchar('author_email', { length: 255 }).notNull(),
+	content: text('content').notNull(),
+	isOwner: boolean('is_owner').default(false).notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+});
+
+// Homepage profile pictures with quotes (for the public site hero carousel)
+export const homepageProfiles = pgTable('homepage_profiles', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	mediaId: uuid('media_id')
+		.references(() => media.id, { onDelete: 'cascade' })
+		.notNull(),
+	quote: text('quote').notNull(),
+	order: integer('order').default(0).notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+});
+
 // API Keys table for external API access
 export const apiKeys = pgTable('api_keys', {
 	id: uuid('id').primaryKey().defaultRandom(),
@@ -129,11 +158,13 @@ export const newsletterSends = pgTable('newsletter_sends', {
 
 // Relations
 export const postsRelations = relations(posts, ({ many }) => ({
-	postMedia: many(postMedia)
+	postMedia: many(postMedia),
+	comments: many(comments)
 }));
 
 export const mediaRelations = relations(media, ({ many }) => ({
-	postMedia: many(postMedia)
+	postMedia: many(postMedia),
+	homepageProfiles: many(homepageProfiles)
 }));
 
 export const postMediaRelations = relations(postMedia, ({ one }) => ({
@@ -143,6 +174,26 @@ export const postMediaRelations = relations(postMedia, ({ one }) => ({
 	}),
 	media: one(media, {
 		fields: [postMedia.mediaId],
+		references: [media.id]
+	})
+}));
+
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+	post: one(posts, {
+		fields: [comments.postId],
+		references: [posts.id]
+	}),
+	parent: one(comments, {
+		fields: [comments.parentId],
+		references: [comments.id],
+		relationName: 'commentReplies'
+	}),
+	replies: many(comments, { relationName: 'commentReplies' })
+}));
+
+export const homepageProfilesRelations = relations(homepageProfiles, ({ one }) => ({
+	media: one(media, {
+		fields: [homepageProfiles.mediaId],
 		references: [media.id]
 	})
 }));
@@ -158,5 +209,9 @@ export type ApiKey = typeof apiKeys.$inferSelect;
 export type NewApiKey = typeof apiKeys.$inferInsert;
 export type Subscriber = typeof subscribers.$inferSelect;
 export type NewSubscriber = typeof subscribers.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
+export type HomepageProfile = typeof homepageProfiles.$inferSelect;
+export type NewHomepageProfile = typeof homepageProfiles.$inferInsert;
 export type NewsletterConfig = typeof newsletterConfig.$inferSelect;
 export type NewsletterSend = typeof newsletterSends.$inferSelect;

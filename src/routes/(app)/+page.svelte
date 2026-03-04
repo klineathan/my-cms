@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard | Timeline CMS</title>
+	<title>Dashboard | My CMS</title>
 </svelte:head>
 
 <div class="p-6 lg:p-8 space-y-8">

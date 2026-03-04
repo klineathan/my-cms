@@ -157,7 +157,7 @@
 </script>
 
 <svelte:head>
-	<title>Media Library | Timeline CMS</title>
+	<title>Media Library | My CMS</title>
 </svelte:head>
 
 <div class="p-6 lg:p-8 space-y-6">

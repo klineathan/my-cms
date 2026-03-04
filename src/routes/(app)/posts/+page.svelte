@@ -135,7 +135,7 @@
 </script>
 
 <svelte:head>
-	<title>Posts | Timeline CMS</title>
+	<title>Posts | My CMS</title>
 </svelte:head>
 
 <div class="p-6 lg:p-8 space-y-6">
