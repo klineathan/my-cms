@@ -32,6 +32,7 @@
 	import Menu from '@lucide/svelte/icons/menu';
 	import X from '@lucide/svelte/icons/x';
 	import CircleUser from '@lucide/svelte/icons/circle-user';
+	import FolderOpen from '@lucide/svelte/icons/folder-open';
 
 	let { children, data } = $props();
 
@@ -40,12 +41,14 @@
 
 	const contentTypes = [
 		{ value: 'posts', label: 'Posts', icon: FileText },
-		{ value: 'homepage-profiles', label: 'Homepage Profiles', icon: CircleUser }
+		{ value: 'homepage-profiles', label: 'Homepage Profiles', icon: CircleUser },
+		{ value: 'my-projects', label: 'My Projects', icon: FolderOpen }
 	];
 
 	$effect(() => {
 		const path = $page.url.pathname;
 		if (path.startsWith('/homepage-profiles')) selectedContentType = 'homepage-profiles';
+		else if (path.startsWith('/my-projects')) selectedContentType = 'my-projects';
 		else if (path.startsWith('/posts') || path === '/') selectedContentType = 'posts';
 	});
 

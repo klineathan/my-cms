@@ -103,6 +103,36 @@ export const homepageProfiles = pgTable('homepage_profiles', {
 	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
 
+// Projects shown on the public site ("Artifacts" section), each with its own detail page
+export const myProjects = pgTable('my_projects', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'), // Optional excerpt for homepage preview
+	content: text('content'), // Rich text content (HTML from TipTap)
+	contentJson: jsonb('content_json'), // TipTap JSON for re-editing
+	url: text('url'), // Optional external link
+	mediaId: uuid('media_id')
+		.references(() => media.id, { onDelete: 'cascade' })
+		.notNull(), // Thumbnail/cover image for homepage preview
+	order: integer('order').default(0).notNull(),
+	isVisible: boolean('is_visible').default(true).notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+});
+
+// Project-Media junction table for gallery media on project detail pages
+export const myProjectMedia = pgTable('my_project_media', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	projectId: uuid('project_id')
+		.references(() => myProjects.id, { onDelete: 'cascade' })
+		.notNull(),
+	mediaId: uuid('media_id')
+		.references(() => media.id, { onDelete: 'cascade' })
+		.notNull(),
+	order: integer('order').default(0).notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+});
+
 // API Keys table for external API access
 export const apiKeys = pgTable('api_keys', {
 	id: uuid('id').primaryKey().defaultRandom(),
@@ -164,7 +194,9 @@ export const postsRelations = relations(posts, ({ many }) => ({
 
 export const mediaRelations = relations(media, ({ many }) => ({
 	postMedia: many(postMedia),
-	homepageProfiles: many(homepageProfiles)
+	homepageProfiles: many(homepageProfiles),
+	myProjects: many(myProjects),
+	myProjectMedia: many(myProjectMedia)
 }));
 
 export const postMediaRelations = relations(postMedia, ({ one }) => ({
@@ -198,6 +230,25 @@ export const homepageProfilesRelations = relations(homepageProfiles, ({ one }) =
 	})
 }));
 
+export const myProjectsRelations = relations(myProjects, ({ one, many }) => ({
+	media: one(media, {
+		fields: [myProjects.mediaId],
+		references: [media.id]
+	}),
+	myProjectMedia: many(myProjectMedia)
+}));
+
+export const myProjectMediaRelations = relations(myProjectMedia, ({ one }) => ({
+	project: one(myProjects, {
+		fields: [myProjectMedia.projectId],
+		references: [myProjects.id]
+	}),
+	media: one(media, {
+		fields: [myProjectMedia.mediaId],
+		references: [media.id]
+	})
+}));
+
 // Types
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
@@ -213,5 +264,9 @@ export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type HomepageProfile = typeof homepageProfiles.$inferSelect;
 export type NewHomepageProfile = typeof homepageProfiles.$inferInsert;
+export type MyProject = typeof myProjects.$inferSelect;
+export type NewMyProject = typeof myProjects.$inferInsert;
+export type MyProjectMedia = typeof myProjectMedia.$inferSelect;
+export type NewMyProjectMedia = typeof myProjectMedia.$inferInsert;
 export type NewsletterConfig = typeof newsletterConfig.$inferSelect;
 export type NewsletterSend = typeof newsletterSends.$inferSelect;
